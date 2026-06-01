@@ -48,4 +48,7 @@ npm run dev
 - Make sure the Google Cloud project has the following APIs enabled:
   - Places API (New)
   - Routes API or Distance Matrix API
-- The POST endpoints for `/api/bookings` and `/api/mock-booking` are implemented.
+- The following API endpoints are implemented:
+  - `GET /api/customer` - Customer lookup by phone number
+  - `POST /api/bookings` - Save booking data
+  - `POST /api/mock-booking` - Generate mock booking reference
