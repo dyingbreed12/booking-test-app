@@ -27,7 +27,7 @@ export const bookingSchema = z
     lastName: z.string().min(2, 'Last name must be 2-50 characters').max(50).optional(),
     email: z.string().email('Enter a valid email').optional(),
     passengers: z
-      .number({ invalid_type_error: 'Passengers is required' })
+      .number()
       .min(1, 'Minimum 1 passenger')
       .max(20, 'Maximum 20 passengers'),
     notes: z.string().optional()
