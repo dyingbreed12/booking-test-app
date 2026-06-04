@@ -12,6 +12,15 @@ interface AddressAutocompleteProps {
   onSelect: (address: string, placeId: string) => void;
 }
 
+function LocationPinIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[15px] w-[15px]" viewBox="0 0 16 16" fill="none">
+      <path d="M8 14s4.5-4 4.5-7.5a4.5 4.5 0 1 0-9 0C3.5 10 8 14 8 14Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 8.1a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2Z" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
 export default function AddressAutocomplete({
   label,
   value,
@@ -44,10 +53,8 @@ export default function AddressAutocomplete({
     <div>
       <div className="relative">
         <label className="absolute -top-2 left-3 z-10 bg-white px-1 text-[11px] leading-4 text-[#74758a]">{label}</label>
-        <span className="pointer-events-none absolute left-3 top-1/2 z-10 h-[15px] w-[12px] -translate-y-1/2 text-[#d3b44d]">
-          <span className="absolute left-[2px] top-0 h-[9px] w-[8px] rounded-full border-2 border-current" />
-          <span className="absolute bottom-0 left-[4px] h-[7px] w-[4px] rotate-45 bg-current" />
-          <span className="absolute left-[5px] top-[3px] h-[2px] w-[2px] rounded-full bg-current" />
+        <span className="pointer-events-none absolute left-3 top-1/2 z-10 -translate-y-1/2 text-[#d3b44d]">
+          <LocationPinIcon />
         </span>
         {isLoaded && !loadError ? (
           <StandaloneSearchBox onLoad={handleLoad} onPlacesChanged={handlePlacesChanged}>
