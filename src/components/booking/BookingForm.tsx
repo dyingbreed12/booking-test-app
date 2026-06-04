@@ -36,6 +36,23 @@ const defaultValues: BookingFormValues = {
   notes: ''
 };
 
+function OneWayIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[16px] w-[16px]" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.95" />
+      <path d="M5 8h5.3M8.5 5.9 10.7 8l-2.2 2.1" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function HourlyIcon() {
+  return (
+    <svg aria-hidden="true" className="h-[16px] w-[16px]" viewBox="0 0 16 16" fill="none">
+      <path d="M5 2.5h6M5 13.5h6M5.8 2.5v2.1c0 .7.3 1.4.9 1.8L8 7.5l1.3-1.1c.6-.4.9-1.1.9-1.8V2.5M5.8 13.5v-2.1c0-.7.3-1.4.9-1.8L8 8.5l1.3 1.1c.6.4.9 1.1.9 1.8v2.1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export default function BookingForm() {
   const { isLoaded } = useJsApiLoader({
     id: 'google-maps-script',
@@ -99,7 +116,6 @@ export default function BookingForm() {
   const watchDestinationPlaceId = watch('destinationPlaceId');
   const watchPassengers = watch('passengers');
   const watchNotes = watch('notes');
-  const watchIsExistingCustomer = watch('isExistingCustomer');
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -141,8 +157,8 @@ export default function BookingForm() {
   }, [toast]);
 
   const tabButtonClass = (isActive: boolean) =>
-    `rounded-2xl border px-4 py-3 text-sm font-semibold transition ${
-      isActive ? 'border-brand-gold bg-white text-slate-900 shadow-sm' : 'border-transparent bg-transparent text-slate-500'
+    `relative inline-flex h-full min-w-0 items-center justify-center gap-2 border border-transparent px-3 text-[14px] font-normal transition ${
+      isActive ? 'bg-[#fffaf0] text-[#c59d2f] shadow-[inset_0_0_0_1.5px_#d3b44d]' : 'bg-white text-[#6f707a]'
     }`;
 
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -259,7 +275,7 @@ export default function BookingForm() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {toast ? (
         <div className="fixed bottom-6 right-6 z-50">
           <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
@@ -278,31 +294,38 @@ export default function BookingForm() {
             }
           });
         }}
-        className="space-y-8"
+        className="space-y-5"
       >
-        <section className="space-y-6">
-          <fieldset className="space-y-4">
-            <legend className="text-sm font-semibold text-slate-800">Booking type</legend>
-            <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1 text-sm shadow-sm">
+        <section className="space-y-5">
+          <fieldset className="space-y-3">
+            <legend className="sr-only">Booking type</legend>
+            <div className="grid h-[30px] grid-cols-2 overflow-hidden rounded-[6px] border border-[#e5e5e5] bg-white text-[14px]">
               {['one-way', 'hourly'].map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => setValue('bookingType', option as BookingFormValues['bookingType'])}
-                  className={tabButtonClass(watchBookingType === option)}
+                  className={`${tabButtonClass(watchBookingType === option)} ${option === 'one-way' ? 'rounded-l-[5px]' : 'rounded-r-[5px]'}`}
                 >
+                  <span
+                    className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center text-[11px] ${
+                      watchBookingType === option ? 'text-[#d3b44d]' : 'text-[#747474]'
+                    }`}
+                  >
+                    {option === 'one-way' ? <OneWayIcon /> : <HourlyIcon />}
+                  </span>
                   {option === 'one-way' ? 'One-way' : 'Hourly'}
                 </button>
               ))}
             </div>
             {watchBookingType === 'hourly' ? (
-              <p className="text-sm text-slate-600">Hourly bookings coming soon.</p>
+              <p className="text-[13px] text-[#52526a]">Hourly bookings coming soon.</p>
             ) : null}
           </fieldset>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-base font-semibold text-slate-900">Pickup</p>
+              <p className="text-[15px] font-bold text-[#15172f]">Pickup</p>
             </div>
             <DateTimeSection
               date={watch('pickupDate')}
@@ -312,13 +335,13 @@ export default function BookingForm() {
               dateError={errors.pickupDate?.message?.toString()}
               timeError={errors.pickupTime?.message?.toString()}
             />
-            <div className="grid w-full grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1 text-sm shadow-sm sm:w-auto">
+            <div className="inline-grid h-[30px] grid-cols-2 overflow-hidden rounded-[6px] border border-[#e5e5e5] bg-white text-[14px]">
               {['location', 'airport'].map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => setValue('pickupLocationType', option as BookingFormValues['pickupLocationType'])}
-                  className={tabButtonClass(watch('pickupLocationType') === option)}
+                  className={`${tabButtonClass(watch('pickupLocationType') === option)} ${option === 'location' ? 'rounded-l-[5px]' : 'rounded-r-[5px]'}`}
                 >
                   {option === 'location' ? 'Location' : 'Airport'}
                 </button>
@@ -327,7 +350,7 @@ export default function BookingForm() {
             <AddressAutocomplete
               label="Location"
               value={watchPickupAddress}
-              placeholder="Search pickup address"
+              placeholder="Clintons Bar & Grille, High Street, Clinton, MA, USA"
               onChange={(value) => setValue('pickupAddress', value)}
               onSelect={(address, placeId) => {
                 setValue('pickupAddress', address);
@@ -339,20 +362,20 @@ export default function BookingForm() {
               <button
                 type="button"
                 onClick={addStop}
-                className="text-sm font-semibold text-brand-gold"
+                className="pl-2 text-[13px] font-normal text-[#c99f31]"
               >
                 + Add a stop
               </button>
             ) : null}
             <div className="space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="space-y-3 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <div key={field.id} className="space-y-3 rounded-[4px] border border-[#cfd1d8] bg-white p-3">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-medium text-slate-900">Stop {index + 1}</p>
+                    <p className="text-[14px] font-semibold text-[#15172f]">Stop {index + 1}</p>
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="text-sm text-slate-500 transition hover:text-slate-900"
+                      className="text-[13px] text-[#74758a] transition hover:text-[#15172f]"
                     >
                       Remove
                     </button>
@@ -372,15 +395,15 @@ export default function BookingForm() {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <p className="text-base font-semibold text-slate-900">Drop off</p>
-            <div className="grid w-full grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-1 text-sm shadow-sm sm:w-auto">
+          <div className="space-y-3 pt-1">
+            <p className="text-[15px] font-bold text-[#15172f]">Drop off</p>
+            <div className="inline-grid h-[30px] grid-cols-2 overflow-hidden rounded-[6px] border border-[#e5e5e5] bg-white text-[14px]">
               {['location', 'airport'].map((option) => (
                 <button
                   key={option}
                   type="button"
                   onClick={() => setValue('dropoffLocationType', option as BookingFormValues['dropoffLocationType'])}
-                  className={tabButtonClass(watch('dropoffLocationType') === option)}
+                  className={`${tabButtonClass(watch('dropoffLocationType') === option)} ${option === 'location' ? 'rounded-l-[5px]' : 'rounded-r-[5px]'}`}
                 >
                   {option === 'location' ? 'Location' : 'Airport'}
                 </button>
@@ -389,7 +412,7 @@ export default function BookingForm() {
             <AddressAutocomplete
               label="Location"
               value={watchDestinationAddress}
-              placeholder="Search destination address"
+              placeholder="Logan Airport Terminal B, Boston, MA, USA"
               onChange={(value) => setValue('destinationAddress', value)}
               onSelect={(address, placeId) => {
                 setValue('destinationAddress', address);
@@ -402,9 +425,9 @@ export default function BookingForm() {
           <DistanceCard distance={distanceText} duration={durationText} error={distanceError} loading={distanceLoading} />
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-3">
           <div>
-            <p className="text-base font-semibold text-slate-900">Contact Information</p>
+            <p className="text-[15px] font-bold text-[#15172f]">Contact Information</p>
           </div>
           <CustomerLookup
             label="Phone Number"
@@ -451,10 +474,10 @@ export default function BookingForm() {
           />
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-800">Notes (optional)</label>
+            <label className="mb-2 block text-[13px] font-normal text-[#15172f]">Notes (optional)</label>
             <textarea
               rows={4}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand-gold focus:ring-2 focus:ring-brand-gold/20"
+              className="w-full rounded-[4px] border border-[#cfd1d8] bg-white px-3 py-2 text-[14px] text-[#272a42] outline-none transition placeholder:text-[#aeb0b8] focus:border-[#d3b44d] focus:ring-1 focus:ring-[#d3b44d]/30"
               placeholder="Add any special instructions or details"
               value={watchNotes}
               onChange={(event) => setValue('notes', event.target.value)}
