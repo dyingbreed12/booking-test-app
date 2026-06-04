@@ -27,7 +27,7 @@ export default function DateTimeSection({ date, time, onDateChange, onTimeChange
             className="h-full w-full border-0 bg-transparent pl-9 pr-3 text-[14px] text-[#272a42] outline-none focus:ring-0"
           />
           {!date ? (
-            <span className="pointer-events-none absolute left-9 top-1/2 -translate-y-1/2 bg-white pr-2 text-[14px] text-[#aeb0b8]">
+            <span className="pointer-events-none absolute left-9 top-1/2 -translate-y-1/2 bg-white pr-2 text-[15px] text-[#aeb0b8]">
               05/13/2023
             </span>
           ) : null}

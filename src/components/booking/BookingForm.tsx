@@ -36,6 +36,8 @@ const defaultValues: BookingFormValues = {
   notes: ''
 };
 
+const SHOW_NOTES_FIELD = false;
+
 function OneWayIcon() {
   return (
     <svg aria-hidden="true" className="h-[16px] w-[16px]" viewBox="0 0 16 16" fill="none">
@@ -473,16 +475,18 @@ export default function BookingForm() {
             error={errors.passengers?.message?.toString()}
           />
 
-          <div>
-            <label className="mb-2 block text-[13px] font-normal text-[#15172f]">Notes (optional)</label>
-            <textarea
-              rows={4}
-              className="w-full rounded-[4px] border border-[#cfd1d8] bg-white px-3 py-2 text-[14px] text-[#272a42] outline-none transition placeholder:text-[#aeb0b8] focus:border-[#d3b44d] focus:ring-1 focus:ring-[#d3b44d]/30"
-              placeholder="Add any special instructions or details"
-              value={watchNotes}
-              onChange={(event) => setValue('notes', event.target.value)}
-            />
-          </div>
+          {SHOW_NOTES_FIELD ? (
+            <div>
+              <label className="mb-2 block text-[13px] font-normal text-[#15172f]">Notes (optional)</label>
+              <textarea
+                rows={4}
+                className="w-full rounded-[4px] border border-[#cfd1d8] bg-white px-3 py-2 text-[14px] text-[#272a42] outline-none transition placeholder:text-[#aeb0b8] focus:border-[#d3b44d] focus:ring-1 focus:ring-[#d3b44d]/30"
+                placeholder="Add any special instructions or details"
+                value={watchNotes}
+                onChange={(event) => setValue('notes', event.target.value)}
+              />
+            </div>
+          ) : null}
         </section>
 
         <div>
