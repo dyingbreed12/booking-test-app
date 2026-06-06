@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { bookingSchema, type BookingFormValues } from '@/schemas/booking';
+import { safeZodResolver } from '@/lib/resolvers/safeZodResolver';
 import { lookupCustomer } from '@/lib/api/customer';
 import { createBooking, type CreateBookingPayload } from '@/lib/api/booking';
+import { ValidationError } from '@/lib/api/error';
 import { useDistanceMatrix } from '@/lib/googleMaps';
 import AddressAutocomplete from './AddressAutocomplete';
 import DateTimeSection from './DateTimeSection';
@@ -67,10 +68,11 @@ export default function BookingForm() {
     setValue,
     watch,
     control,
+    setError,
     formState: { errors }
   } = useForm<BookingFormValues>({
     defaultValues,
-    resolver: zodResolver(bookingSchema),
+    resolver: safeZodResolver(bookingSchema) as any,
     mode: 'onSubmit',
     reValidateMode: 'onSubmit'
   });
@@ -194,27 +196,52 @@ export default function BookingForm() {
       };
 
       const bookingResponse = await createBooking(payload);
-      const mockResponse = await fetch('/api/mock-booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
 
-      if (!mockResponse.ok) {
-        throw new Error('Mock booking failed');
+      // Mock booking call - continue even if it fails
+      let mockData: { bookingReference?: string } | null = null;
+      try {
+        const mockResponse = await fetch('/api/mock-booking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (mockResponse.ok) {
+          mockData = await mockResponse.json().catch(() => null);
+        }
+      } catch {
+        // Silently continue without mock data, use main booking reference instead
       }
 
-      const mockData = await mockResponse.json();
-      setBookingReference(mockData.bookingReference ?? bookingResponse.bookingReference ?? null);
+      const bookingRef = mockData?.bookingReference ?? bookingResponse.bookingReference ?? null;
+      setBookingReference(bookingRef);
       setSummaryData(data);
       setSubmissionStatus('success');
       setSubmissionMessage('Booking confirmed successfully.');
       showToast('Booking confirmed successfully.', 'success');
     } catch (error) {
-      setSubmissionStatus('error');
-      setSubmissionMessage('Unable to submit booking. Please try again later.');
-      showToast('Unable to submit booking. Please try again later.', 'error');
+      if (error instanceof ValidationError) {
+        // Apply field-level errors from the API validation
+        Object.entries(error.fieldErrors).forEach(([fieldName, errorMessage]) => {
+          setError(fieldName as any, {
+            type: 'manual',
+            message: errorMessage
+          });
+        });
+
+        const firstError = Object.values(error.fieldErrors)[0];
+        setSubmissionStatus('error');
+        setSubmissionMessage(firstError || 'Please fix validation errors and try again.');
+        showToast(firstError || 'Please fix validation errors and try again.', 'error');
+      } else {
+        const message = error instanceof Error ? error.message : 'Unable to submit booking. Please try again later.';
+        setSubmissionStatus('error');
+        setSubmissionMessage(message);
+        showToast(message, 'error');
+      }
     }
   };
+
+  const handleFormSubmit = handleSubmit(onSubmit as any, handleFormError);
 
   return (
     <div className="space-y-5">
@@ -223,7 +250,7 @@ export default function BookingForm() {
           <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
         </div>
       ) : null}
-      <form onSubmit={handleSubmit(onSubmit, handleFormError)} className="space-y-5">
+      <form onSubmit={handleFormSubmit} className="space-y-5">
         <section className="space-y-5">
           <fieldset className="space-y-3">
             <legend className="sr-only">Booking type</legend>

@@ -54,11 +54,20 @@ export const bookingSchema = z
       }
     }
 
-    const selectedDate = new Date(data.pickupDate + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDate < today) {
-      ctx.addIssue({ code: 'custom', path: ['pickupDate'], message: 'Date cannot be in the past' });
+    // Safely validate pickup date is not in the past
+    if (data.pickupDate) {
+      try {
+        const selectedDate = new Date(data.pickupDate + 'T00:00:00');
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Only check if the date is valid before comparing
+        if (!isNaN(selectedDate.getTime()) && selectedDate < today) {
+          ctx.addIssue({ code: 'custom', path: ['pickupDate'], message: 'Date cannot be in the past' });
+        }
+      } catch {
+        // Silently skip date validation if there's an error - min(1) validation will catch empty dates
+      }
     }
   });
 
