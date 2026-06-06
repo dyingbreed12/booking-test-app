@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { customerLookupSchema, customerCreateSchema, normalizePhoneNumber } from '@/schemas/customer';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const phone = url.searchParams.get('phone');
+  const rawPhone = url.searchParams.get('phone') ?? '';
+  const phone = normalizePhoneNumber(rawPhone);
+  const parseResult = customerLookupSchema.safeParse({ phone });
 
-  if (!phone) {
-    return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'Invalid phone number', issues: parseResult.error.issues },
+      { status: 400 }
+    );
   }
-  console.log(`Looking up customer with phone: ${phone}`);
+
   const customer = await prisma.customer.findUnique({
     where: { phoneNumber: phone }
   });
@@ -18,16 +24,28 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { firstName, lastName, email, phoneNumber } = body;
+  const parseResult = customerCreateSchema.safeParse(body);
 
-  if (!firstName || !lastName || !email || !phoneNumber) {
-    return NextResponse.json({ error: 'Missing customer data' }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'Invalid customer data', issues: parseResult.error.issues },
+      { status: 400 }
+    );
   }
 
   const customer = await prisma.customer.upsert({
-    where: { phoneNumber },
-    update: { firstName, lastName, email },
-    create: { firstName, lastName, email, phoneNumber }
+    where: { phoneNumber: normalizePhoneNumber(parseResult.data.phoneNumber) },
+    update: {
+      firstName: parseResult.data.firstName,
+      lastName: parseResult.data.lastName,
+      email: parseResult.data.email
+    },
+    create: {
+      firstName: parseResult.data.firstName,
+      lastName: parseResult.data.lastName,
+      email: parseResult.data.email,
+      phoneNumber: normalizePhoneNumber(parseResult.data.phoneNumber)
+    }
   });
 
   return NextResponse.json({ customer });

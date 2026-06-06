@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
-import { StandaloneSearchBox, useJsApiLoader } from '@react-google-maps/api';
+import { StandaloneSearchBox } from '@react-google-maps/api';
+import { useGoogleMapsLoader } from '@/lib/googleMaps';
 
 interface AddressAutocompleteProps {
   label: string;
@@ -30,12 +31,7 @@ export default function AddressAutocomplete({
   onSelect
 }: AddressAutocompleteProps) {
   const searchBoxRef = useRef<any>(null);
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: 'google-maps-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
-    version: 'weekly'
-  });
+  const { isLoaded, loadError } = useGoogleMapsLoader();
 
   const handleLoad = (ref: any) => {
     searchBoxRef.current = ref;

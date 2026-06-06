@@ -1,43 +1,33 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { bookingSchema } from '@/schemas/booking';
+import { normalizePhoneNumber } from '@/schemas/customer';
 
 export async function POST(request: Request) {
   const body = await request.json();
+  const parseResult = bookingSchema.safeParse(body);
 
-  const {
-    bookingType,
-    pickupAddress,
-    pickupPlaceId,
-    destinationAddress,
-    destinationPlaceId,
-    stops,
-    phoneNumber,
-    firstName,
-    lastName,
-    email,
-    passengers,
-    pickupDate,
-    pickupTime,
-    notes,
-    distanceText,
-    durationText
-  } = body;
-
-  if (!phoneNumber || !pickupAddress || !destinationAddress || !pickupDate || !pickupTime) {
-    return NextResponse.json({ error: 'Missing booking information' }, { status: 400 });
+  if (!parseResult.success) {
+    return NextResponse.json(
+      { error: 'Invalid booking payload', issues: parseResult.error.issues },
+      { status: 400 }
+    );
   }
+
+  const bookingData = parseResult.data;
+  const phoneNumber = normalizePhoneNumber(bookingData.phoneNumber);
 
   const customer = await prisma.customer.upsert({
     where: { phoneNumber },
     update: {
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      email: email || undefined
+      firstName: bookingData.firstName || undefined,
+      lastName: bookingData.lastName || undefined,
+      email: bookingData.email || undefined
     },
     create: {
-      firstName: firstName || 'Guest',
-      lastName: lastName || 'Customer',
-      email: email || 'unknown@example.com',
+      firstName: bookingData.firstName || 'Guest',
+      lastName: bookingData.lastName || 'Customer',
+      email: bookingData.email || 'unknown@example.com',
       phoneNumber
     }
   });
@@ -45,19 +35,21 @@ export async function POST(request: Request) {
   const booking = await prisma.booking.create({
     data: {
       customerId: customer.id,
-      pickupAddress,
-      pickupPlaceId,
-      destinationAddress,
-      destinationPlaceId,
-      stops,
-      distanceText: distanceText || null,
-      durationText: durationText || null,
-      bookingDate: new Date(pickupDate),
-      bookingTime: pickupTime,
-      passengers: Number(passengers),
-      notes: notes || null
+      pickupAddress: bookingData.pickupAddress,
+      pickupPlaceId: bookingData.pickupPlaceId,
+      destinationAddress: bookingData.destinationAddress,
+      destinationPlaceId: bookingData.destinationPlaceId,
+      stops: bookingData.stops,
+      distanceText: bookingData.distanceText ?? null,
+      durationText: bookingData.durationText ?? null,
+      bookingDate: new Date(bookingData.pickupDate),
+      bookingTime: bookingData.pickupTime,
+      passengers: bookingData.passengers,
+      notes: bookingData.notes ?? null
     }
   });
 
-  return NextResponse.json({ booking });
+  const bookingReference = `BK-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  return NextResponse.json({ booking, bookingReference });
 }

@@ -30,7 +30,9 @@ export const bookingSchema = z
       .number()
       .min(1, 'Minimum 1 passenger')
       .max(20, 'Maximum 20 passengers'),
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    distanceText: z.string().optional(),
+    durationText: z.string().optional()
   })
   .superRefine((data, ctx) => {
     if (!data.isExistingCustomer) {

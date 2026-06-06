@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ZodError } from 'zod';
-import { useJsApiLoader } from '@react-google-maps/api';
 import { bookingSchema, type BookingFormValues } from '@/schemas/booking';
+import { lookupCustomer } from '@/lib/api/customer';
+import { createBooking, type CreateBookingPayload } from '@/lib/api/booking';
+import { useDistanceMatrix } from '@/lib/googleMaps';
 import AddressAutocomplete from './AddressAutocomplete';
 import DateTimeSection from './DateTimeSection';
 import DistanceCard from './DistanceCard';
@@ -56,13 +57,6 @@ function HourlyIcon() {
 }
 
 export default function BookingForm() {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-maps-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
-    version: 'weekly'
-  });
-
   const {
     register,
     handleSubmit,
@@ -100,10 +94,6 @@ export default function BookingForm() {
   );
   const [customerLoading, setCustomerLoading] = useState(false);
   const [customerFound, setCustomerFound] = useState(false);
-  const [distanceText, setDistanceText] = useState<string | null>(null);
-  const [durationText, setDurationText] = useState<string | null>(null);
-  const [distanceError, setDistanceError] = useState<string | null>(null);
-  const [distanceLoading, setDistanceLoading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [submissionMessage, setSubmissionMessage] = useState<string | null>(null);
   const [bookingReference, setBookingReference] = useState<string | null>(null);
@@ -119,38 +109,11 @@ export default function BookingForm() {
   const watchPassengers = watch('passengers');
   const watchNotes = watch('notes');
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!watchPickupPlaceId || !watchDestinationPlaceId) {
-      setDistanceText(null);
-      setDurationText(null);
-      return;
-    }
+  const { distanceText, durationText, error: distanceError, loading: distanceLoading } = useDistanceMatrix(
+    watchPickupPlaceId,
+    watchDestinationPlaceId
+  );
 
-    setDistanceLoading(true);
-    const service = new window.google.maps.DistanceMatrixService();
-    service.getDistanceMatrix(
-      {
-        origins: [{ placeId: watchPickupPlaceId }],
-        destinations: [{ placeId: watchDestinationPlaceId }],
-        travelMode: window.google.maps.TravelMode.DRIVING,
-        unitSystem: window.google.maps.UnitSystem.METRIC
-      },
-      (response, status) => {
-        setDistanceLoading(false);
-        if (status === 'OK' && response?.rows?.[0]?.elements?.[0]) {
-          const element = response.rows[0].elements[0];
-          setDistanceText(element.distance?.text ?? null);
-          setDurationText(element.duration?.text ?? null);
-          setDistanceError(null);
-        } else {
-          setDistanceText(null);
-          setDurationText(null);
-          setDistanceError('Unable to calculate distance at this time.');
-        }
-      }
-    );
-  }, [isLoaded, watchPickupPlaceId, watchDestinationPlaceId]);
 
   useEffect(() => {
     if (!toast) return;
@@ -165,20 +128,6 @@ export default function BookingForm() {
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
-  };
-
-  const isZodError = (error: unknown): error is ZodError =>
-    error instanceof ZodError;
-
-  const setZodErrors = (error: ZodError) => {
-    error.issues.forEach((issue) => {
-      if (issue.path.length > 0) {
-        setError(issue.path as any, {
-          type: issue.code ?? 'manual',
-          message: issue.message
-        });
-      }
-    });
   };
 
   const handleFormError = (errors: any) => {
@@ -199,11 +148,8 @@ export default function BookingForm() {
     setCustomerMessage('Looking up customer details...');
 
     try {
-      const response = await fetch(`/api/customer?phone=${encodeURIComponent(watchPhoneNumber)}`);
-      if (!response.ok) {
-        throw new Error('Lookup failed');
-      }
-      const data = await response.json();
+      const data = await lookupCustomer(watchPhoneNumber);
+
       if (data.customer) {
         setCustomerFound(true);
         setCustomerMessage(`Welcome back, ${data.customer.firstName}`);
@@ -236,27 +182,17 @@ export default function BookingForm() {
     setBookingReference(null);
 
     try {
-      const bookingPayload = {
+      const payload: CreateBookingPayload = {
         ...data,
         stops: data.stops,
         distanceText,
         durationText
       };
 
-      const bookingResponse = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingPayload)
-      });
-
-      if (!bookingResponse.ok) {
-        throw new Error('Booking save failed');
-      }
-
+      const bookingResponse = await createBooking(payload);
       const mockResponse = await fetch('/api/mock-booking', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bookingPayload)
+        headers: { 'Content-Type': 'application/json' }
       });
 
       if (!mockResponse.ok) {
@@ -264,7 +200,7 @@ export default function BookingForm() {
       }
 
       const mockData = await mockResponse.json();
-      setBookingReference(mockData.bookingReference);
+      setBookingReference(mockData.bookingReference ?? bookingResponse.bookingReference ?? null);
       setSummaryData(data);
       setSubmissionStatus('success');
       setSubmissionMessage('Booking confirmed successfully.');
@@ -283,21 +219,7 @@ export default function BookingForm() {
           <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />
         </div>
       ) : null}
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void handleSubmit(onSubmit, handleFormError)(event).catch((error) => {
-            if (isZodError(error)) {
-              setZodErrors(error);
-              handleFormError(error.issues);
-            } else {
-              console.error(error);
-              showToast('Unexpected validation error. Please try again.', 'error');
-            }
-          });
-        }}
-        className="space-y-5"
-      >
+      <form onSubmit={handleSubmit(onSubmit, handleFormError)} className="space-y-5">
         <section className="space-y-5">
           <fieldset className="space-y-3">
             <legend className="sr-only">Booking type</legend>
@@ -490,7 +412,7 @@ export default function BookingForm() {
         </section>
 
         <div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" disabled={submissionStatus === 'submitting'}>
             {submissionStatus === 'submitting' ? 'Submitting...' : 'Continue'}
           </Button>
           {submissionMessage ? (
