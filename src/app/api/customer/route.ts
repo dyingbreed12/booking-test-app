@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { customerLookupSchema, customerCreateSchema, normalizePhoneNumber } from '@/schemas/customer';
 
+/**
+ * Customer lookup endpoint.
+ *
+ * This route is intentionally lightweight: it validates requests, normalizes
+ * phone numbers, and returns a canonical customer record or null.
+ */
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const rawPhone = url.searchParams.get('phone') ?? '';
@@ -22,6 +28,12 @@ export async function GET(request: Request) {
   return NextResponse.json({ customer: customer ?? null });
 }
 
+/**
+ * Customer create/update endpoint.
+ *
+ * Uses upsert semantics so the client can safely retry the same contact
+ * details without creating duplicate customer records.
+ */
 export async function POST(request: Request) {
   const body = await request.json();
   const parseResult = customerCreateSchema.safeParse(body);

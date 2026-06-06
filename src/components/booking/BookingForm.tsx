@@ -17,6 +17,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Toast from '@/components/ui/Toast';
 
+// Default values are deliberately explicit so the booking form remains controlled
+// even when parts of the form conditionally render based on customer lookup state.
 const defaultValues: BookingFormValues = {
   bookingType: 'one-way',
   pickupDate: '',
@@ -37,6 +39,8 @@ const defaultValues: BookingFormValues = {
   notes: ''
 };
 
+// This flag is intentionally kept separate from the form state so we can
+// easily enable notes as a future enhancement without altering the schema.
 const SHOW_NOTES_FIELD = false;
 
 function OneWayIcon() {
@@ -61,7 +65,6 @@ export default function BookingForm() {
     register,
     handleSubmit,
     setValue,
-    setError,
     watch,
     control,
     formState: { errors }
@@ -72,6 +75,8 @@ export default function BookingForm() {
     reValidateMode: 'onSubmit'
   });
 
+  // Registering form fields manually ensures react-hook-form tracks fields
+  // that are wired through controlled components or callbacks rather than direct refs.
   useEffect(() => {
     register('bookingType');
     register('pickupDate');
@@ -113,7 +118,6 @@ export default function BookingForm() {
     watchPickupPlaceId,
     watchDestinationPlaceId
   );
-
 
   useEffect(() => {
     if (!toast) return;

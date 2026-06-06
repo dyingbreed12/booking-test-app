@@ -7,6 +7,12 @@ interface DistanceCardProps {
   loading?: boolean;
 }
 
+/**
+ * Displays the current distance calculation state.
+ *
+ * This component layers loading, error, and result states in a predictable way
+ * so the parent form does not need to manage those presentation details.
+ */
 export default function DistanceCard({ distance, duration, error, loading }: DistanceCardProps) {
   return (
     <div className="rounded-[4px] border border-[#cfd1d8] bg-white px-4 py-3">

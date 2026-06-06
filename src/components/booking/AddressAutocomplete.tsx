@@ -22,6 +22,13 @@ function LocationPinIcon() {
   );
 }
 
+/**
+ * Address autocomplete input with a Google Maps fallback.
+ *
+ * This component is responsible for the presentation of place lookup logic
+ * and isolates the dependency on the Google Maps API from the rest of the form.
+ * That makes testing and future replacement easier.
+ */
 export default function AddressAutocomplete({
   label,
   value,

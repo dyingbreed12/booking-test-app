@@ -5,6 +5,12 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
+/**
+ * Standard text input with label and inline error handling.
+ *
+ * This component is intended for simple form fields where the label floats
+ * above the input. More complex field layouts should use custom components.
+ */
 export default function Input({ label, error, className = '', ...props }: InputProps) {
   const icon = label.toLowerCase().includes('email') ? '@' : '';
 

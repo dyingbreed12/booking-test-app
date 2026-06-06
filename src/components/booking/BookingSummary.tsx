@@ -16,6 +16,13 @@ interface BookingSummaryProps {
   reference?: string;
 }
 
+/**
+ * Booking confirmation summary shown after a successful submit.
+ *
+ * This component is intentionally presentational and only reflects the
+ * completed booking state. Any future split between a summary review step and
+ * confirmation step should still reuse this view.
+ */
 export default function BookingSummary({
   firstName,
   lastName,

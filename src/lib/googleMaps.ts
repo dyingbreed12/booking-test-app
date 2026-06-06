@@ -4,6 +4,12 @@ import { useJsApiLoader } from '@react-google-maps/api';
 const GOOGLE_LIBRARIES = ['places'] as const;
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 
+/**
+ * Loads the Google Maps JavaScript API once and exposes the loading state.
+ *
+ * This hook is intentionally simple so the rest of the app can remain
+ * agnostic of the underlying map loader implementation.
+ */
 export function useGoogleMapsLoader() {
   return useJsApiLoader({
     id: 'google-maps-script',
@@ -13,6 +19,12 @@ export function useGoogleMapsLoader() {
   });
 }
 
+/**
+ * Resolves route distance and travel time from origin/destination place IDs.
+ *
+ * The hook guards against stale responses by using a request counter. This is
+ * important because the user can change locations while an earlier request is still pending.
+ */
 export function useDistanceMatrix(originPlaceId?: string, destinationPlaceId?: string) {
   const { isLoaded, loadError } = useGoogleMapsLoader();
   const [distanceText, setDistanceText] = useState<string | null>(null);

@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+/**
+ * Validation schema for customer lookups.
+ *
+ * The frontend and API route both rely on a normalized, international-style
+ * phone format so customer records are consistent across requests.
+ */
 export const customerLookupSchema = z.object({
   phone: z
     .string()
@@ -10,6 +16,13 @@ export const customerLookupSchema = z.object({
 
 export const normalizePhoneNumber = (phone: string) => phone.replace(/[^+0-9]/g, '');
 
+/**
+ * Customer creation schema used by the API route.
+ *
+ * New fields should be added here first to keep the payload validation and
+ * persistence contract aligned. The preprocess step normalizes the phone value
+ * before it reaches the stricter phone validation.
+ */
 export const customerCreateSchema = z.object({
   firstName: z.string().min(2, 'First name is required').max(50),
   lastName: z.string().min(2, 'Last name is required').max(50),

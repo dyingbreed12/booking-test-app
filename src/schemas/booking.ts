@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+/**
+ * Booking validation schema for the client and server.
+ *
+ * Keeping the schema centralized avoids drift between frontend form validation
+ * and backend request validation. New fields should be added here first,
+ * then wired into the form component and API payload.
+ */
 export const bookingSchema = z
   .object({
     bookingType: z.enum(['one-way', 'hourly']),

@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { bookingSchema } from '@/schemas/booking';
 import { normalizePhoneNumber } from '@/schemas/customer';
 
+/**
+ * Booking API route.
+ *
+ * The route validates the payload before any database writes. This keeps the
+ * server behavior predictable and reduces the chance of invalid data entering Prisma.
+ */
 export async function POST(request: Request) {
   const body = await request.json();
   const parseResult = bookingSchema.safeParse(body);

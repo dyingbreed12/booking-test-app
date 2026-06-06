@@ -13,6 +13,13 @@ interface CustomerLookupProps {
   children: ReactNode;
 }
 
+/**
+ * Encapsulates the phone entry and lookup UX.
+ *
+ * This component separates the lookup experience from the raw contact fields.
+ * It provides a clear place to add customer validation, tooltip text, or alternate
+ * lookup flows in the future without touching the surrounding form layout.
+ */
 export default function CustomerLookup({ label, value, onChange, onBlur, loading, message, error, children }: CustomerLookupProps) {
   const displayValue = value.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, '+1 $1 $2 $3');
 

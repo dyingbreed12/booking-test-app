@@ -1,5 +1,11 @@
 import { CustomerCreatePayload, customerLookupSchema, normalizePhoneNumber } from '@/schemas/customer';
 
+/**
+ * Lookup endpoint wrapper for customer data.
+ *
+ * The customer phone is normalized before validation so the rest of the code
+ * can depend on a consistent international format.
+ */
 export async function lookupCustomer(phone: string) {
   const normalizedPhone = normalizePhoneNumber(phone);
   const parseResult = customerLookupSchema.safeParse({ phone: normalizedPhone });
@@ -17,6 +23,12 @@ export async function lookupCustomer(phone: string) {
   return response.json();
 }
 
+/**
+ * Creates or updates a customer record before booking.
+ *
+ * This helper uses the same normalization behavior as the server route so
+ * the persistence contract remains stable across client/server boundaries.
+ */
 export async function upsertCustomer(payload: CustomerCreatePayload) {
   const response = await fetch('/api/customer', {
     method: 'POST',

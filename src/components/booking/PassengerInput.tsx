@@ -6,6 +6,12 @@ interface PassengerInputProps {
   error?: string;
 }
 
+/**
+ * Simple passenger count input.
+ *
+ * Keeping this as a separate component makes it easy to enhance the input with
+ * recommended passenger limits, validation hints, or alternate controls in the future.
+ */
 export default function PassengerInput({ value, onChange, error }: PassengerInputProps) {
   return (
     <div>

@@ -27,6 +27,13 @@ function ClockIcon() {
   );
 }
 
+/**
+ * A compact date/time section for pickup scheduling.
+ *
+ * This component centralizes both controls so there is a single place to
+ * adapt the UI for timezone-aware dates, alternate calendar pickers, or
+ * validation changes.
+ */
 export default function DateTimeSection({ date, time, onDateChange, onTimeChange, dateError, timeError }: DateTimeSectionProps) {
   return (
     <div className="grid grid-cols-[1fr_132px] gap-3">

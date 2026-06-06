@@ -7,6 +7,12 @@ interface ToastProps {
   icon?: ReactNode;
 }
 
+/**
+ * Simple toast notification used for transient success/error feedback.
+ *
+ * This component is intentionally presentation-only. The caller controls
+ * timing and dismissal so it can be re-used for different notification flows.
+ */
 export default function Toast({ type, message, onClose, icon }: ToastProps) {
   return (
     <div className="pointer-events-auto w-full max-w-sm rounded-3xl border bg-white px-4 py-4 shadow-2xl ring-1 ring-slate-900/5">
