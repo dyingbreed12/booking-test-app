@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { CONTACT_EMAIL, isDemoLocked } from '@/lib/appLock';
 import { prisma } from '@/lib/prisma';
 import { bookingSchema } from '@/schemas/booking';
 import { normalizePhoneNumber } from '@/schemas/customer';
@@ -10,6 +11,13 @@ import { normalizePhoneNumber } from '@/schemas/customer';
  * server behavior predictable and reduces the chance of invalid data entering Prisma.
  */
 export async function POST(request: Request) {
+  if (isDemoLocked()) {
+    return NextResponse.json(
+      { error: `This demo is currently unavailable. Please contact ${CONTACT_EMAIL}.` },
+      { status: 423 }
+    );
+  }
+
   const body = await request.json();
   const parseResult = bookingSchema.safeParse(body);
 

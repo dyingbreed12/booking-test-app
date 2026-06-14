@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
+import { CONTACT_EMAIL, isDemoLocked } from '@/lib/appLock';
 import { prisma } from '@/lib/prisma';
 import { customerLookupSchema, customerCreateSchema, normalizePhoneNumber } from '@/schemas/customer';
+
+function lockedResponse() {
+  return NextResponse.json(
+    { error: `This demo is currently unavailable. Please contact ${CONTACT_EMAIL}.` },
+    { status: 423 }
+  );
+}
 
 /**
  * Customer lookup endpoint.
@@ -9,6 +17,10 @@ import { customerLookupSchema, customerCreateSchema, normalizePhoneNumber } from
  * phone numbers, and returns a canonical customer record or null.
  */
 export async function GET(request: Request) {
+  if (isDemoLocked()) {
+    return lockedResponse();
+  }
+
   const url = new URL(request.url);
   const rawPhone = url.searchParams.get('phone') ?? '';
   const phone = normalizePhoneNumber(rawPhone);
@@ -35,6 +47,10 @@ export async function GET(request: Request) {
  * details without creating duplicate customer records.
  */
 export async function POST(request: Request) {
+  if (isDemoLocked()) {
+    return lockedResponse();
+  }
+
   const body = await request.json();
   const parseResult = customerCreateSchema.safeParse(body);
 
